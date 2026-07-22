@@ -218,6 +218,15 @@ SELECT
   COUNTIF(revol_util < 0) AS negative_values,
   COUNTIF(revol_util > 100) AS over_100_percent
 FROM `cedar-turbine-501913-v0.lend_club.accepted_clean_temp_num`
+--Found values exceeding 100, checked number of high values
+SELECT
+ COUNTIF(revol_util > 100) AS over_100,
+ COUNTIF(revol_util > 150) AS over_150,
+ COUNTIF(revol_util > 200) AS over_200,
+ COUNTIF(revol_util > 500) AS over_500
+FROM `cedar-turbine-501913-v0.lend_club.accepted_clean_temp_num`
+--Decided not to alter due to only 31 records over 150%
+--7343 records over 100%, which is possibile
 
 SELECT
   MIN(open_acc) AS min_open_acc,
@@ -262,7 +271,6 @@ SELECT
   COUNTIF(mort_acc IS NULL) AS null_mort_acc,
 FROM `cedar-turbine-501913-v0.lend_club.accepted_clean_temp_num`
 
-
 --Final Validation
 SELECT
   COUNTIF(fico_range_low IS NULL) AS fico_nulls,
@@ -275,3 +283,48 @@ SELECT
   COUNTIF(inq_last_6mths IS NULL) AS inq_last_6mths_nulls,
   COUNTIF(mort_acc IS NULL) AS mort_acc_nulls
 FROM `cedar-turbine-501913-v0.lend_club.accepted_clean_temp_num`
+--Minimal number of NULL values for all fields, no changes made
+
+--Created new columns for ease of analysis before moving onto EDA
+ALTER TABLE `cedar-turbine-501913-v0.lend_club.accepted_clean_temp_num`
+ADD COLUMN default_flag INT64;
+ALTER TABLE `cedar-turbine-501913-v0.lend_club.accepted_clean_temp_num`
+ADD COLUMN fico_avg FLOAT64;
+ALTER TABLE `cedar-turbine-501913-v0.lend_club.accepted_clean_temp_num`
+ADD COLUMN issue_year INT64;
+ALTER TABLE `cedar-turbine-501913-v0.lend_club.accepted_clean_temp_num`
+ADD COLUMN issue_month INT64;
+ALTER TABLE `cedar-turbine-501913-v0.lend_club.accepted_clean_temp_num`
+ADD COLUMN loan_size_band STRING;
+ALTER TABLE `cedar-turbine-501913-v0.lend_club.accepted_clean_temp_num`
+ADD COLUMN interest_rate_band STRING;
+
+--Populated new columns
+UPDATE `cedar-turbine-501913-v0.lend_club.accepted_clean_temp_num`
+SET
+  default_flag = CASE
+    WHEN loan_outcome = 'Default' THEN 1
+    ELSE 0
+  END,
+  
+  fico_avg = ROUND((fico_range_low + fico_range_high) / 2, 0),
+
+  issue_year = EXTRACT(YEAR FROM issue_date),
+
+  issue_month = EXTRACT(MONTH FROM issue_date),
+
+  loan_size_band = CASE
+    WHEN loan_amnt < 5000 THEN '<$5K'
+    WHEN loan_amnt < 10000 THEN '$5K-$10K'
+    WHEN loan_amnt < 20000 THEN '$10K-$20K'
+    WHEN loan_amnt < 35000 THEN '$20K-$35K'
+    ELSE '>=$35K'
+  END,
+
+  interest_rate_band = CASE
+    WHEN int_rate < 8 THEN 'Low'
+    WHEN int_rate < 12 THEN 'Medium'
+    WHEN int_rate < 16 THEN 'High'
+    ELSE 'Very High'
+  END
+WHERE TRUE
