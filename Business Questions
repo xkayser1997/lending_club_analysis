@@ -1,10 +1,11 @@
-**Overview**
+**Overview(accepted)**
 How many loans have been issued?
 What is the total funded amount?
 What is the average loan amount?
 What is the average interest rate?
+Which states have the most accepted applications?
 
-**Risk Analysis**
+**Risk Analysis(accepted/rejected)**
 What credit tiers have the highest charge off rates?
 What factors influence loan default?
 Is there a specific loan type/purpose with higher rates of default?
@@ -15,10 +16,24 @@ Is loan amount related to default risk?
 Which states have the highest default rates?
 Are rejected loan patterns in line with credit risk indicators?
 
-**Borrowers**
+**Borrowers(accepted)**
 What income ranges are most common?
 What employment lengths are most common?
+What home ownership types are most common?
+What loan purposes are most popular?
 
+**Pricing Strat(accepted)**
+How do interest rates vary by tier?
+Which loan purposes receive the highest rates?
+Does loan size affect pricing?
+Does income affect pricing?
+Does DTI relate to interest rates?
 
+**Rejections(rejected)**
+Which states have the most rejected applications?
+What loan amounts are rejected most often?
+Which income ranges are most commonly rejected?
+Which credit tiers are most commonly rejected?
+What DTI ranges are rejected most frequently?
 
-
+**Recommendations pending findings**
