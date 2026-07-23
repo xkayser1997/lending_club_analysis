@@ -135,6 +135,80 @@ SELECT
   COUNT(*) as total_records,
   COUNTIF(Risk_Score <300) AS low_scores,
   COUNTIF(Risk_Score > 850) as high_scores
-
 FROM `cedar-turbine-501913-v0.lend_club.rejected_clean`
---Small distribution outside of normal range
+ --28838 High, 86977 Low, 86040 of the low are 0's
+
+ --Converted 0's to NULL since they are invalid
+UPDATE `cedar-turbine-501913-v0.lend_club.rejected_clean`
+SET Risk_Score = Null
+WHERE Risk_Score = 0
+
+--Checked ZIP codes
+SELECT
+  COUNT(*) AS total,
+  COUNT(`Zip Code`) AS non_null,
+  COUNT(DISTINCT `Zip Code`) AS unique_zips
+FROM `cedar-turbine-501913-v0.lend_club.rejected_clean`
+
+--Checked States
+SELECT
+    State,
+    COUNT(*) AS applications
+FROM `cedar-turbine-501913-v0.lend_club.rejected_clean`
+GROUP BY State
+ORDER BY State;
+--22 NULLS, not making any changes
+
+--Checked Policy Code
+SELECT
+    `Policy Code`,
+    COUNT(*) as total_loans
+FROM `cedar-turbine-501913-v0.lend_club.rejected_clean`
+
+GROUP BY `Policy Code`
+--Almost all 0's, 918 NULLS, not making changes since it
+--will be excluded from the analysis
+
+--Checked Employment Length
+SELECT
+    `Employment Length`,
+    COUNT(*) as total_loans
+FROM `cedar-turbine-501913-v0.lend_club.rejected_clean`
+
+GROUP BY `Employment Length`
+ORDER BY `Employment Length` DESC
+
+--Checked DTI
+SELECT
+  MIN(`Debt-To-Income Ratio`) AS min_dti,
+  MAX(`Debt-To-Income Ratio`) AS max_dti,
+  AVG(`Debt-To-Income Ratio`) AS avg_dti,
+  COUNT(*) AS total,
+  COUNT(`Debt-To-Income Ratio`) AS populated
+FROM cedar-turbine-501913-v0.lend_club.rejected_clean;
+--Unrealistically high avg of 143% with a max DTI of 50000000%, did additional digging
+
+SELECT
+    CASE
+      WHEN `Debt-To-Income Ratio` < 0 THEN 'Negative'
+      WHEN `Debt-To-Income Ratio` <= 0.5 THEN '0-50%'
+      WHEN `Debt-To-Income Ratio` <= 1 THEN '50-100%'
+      WHEN `Debt-To-Income Ratio` <= 5 THEN '100-500%'
+      ELSE '500%+'
+    END AS dti_bucket,
+    COUNT(*) AS records
+FROM cedar-turbine-501913-v0.lend_club.rejected_clean
+GROUP BY dti_bucket
+ORDER BY records DESC;
+
+--Creating a column that excludes outliers to use for analysis
+ALTER TABLE rejected_loans
+ADD COLUMN dti_clean FLOAT64;
+
+UPDATE `cedar-turbine-501913-v0.lend_club.rejected_clean`
+SET dti_clean =
+CASE
+    WHEN `Debt-To-Income Ratio` >= 0 AND `Debt-To-Income Ratio` <= 1 THEN `Debt-To-Income Ratio`
+    ELSE NULL
+END
+WHERE TRUE
