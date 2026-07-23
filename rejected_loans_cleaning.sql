@@ -1,8 +1,7 @@
 --Created new table with no duplicate values, removed 157,954 duplicates
 CREATE OR REPLACE TABLE `cedar-turbine-501913-v0.lend_club.accepted_clean_final`
 AS
-SELECT
-  *
+SELECT DISTINCT *
 FROM `cedar-turbine-501913-v0.lend_club.accepted_clean_temp_num`
 
 --Checking for nulls and outliers in Amount Requested
