@@ -39,3 +39,20 @@ SELECT
 FROM `cedar-turbine-501913-v0.lend_club.accepted_clean_final`
 GROUP BY addr_state
 ORDER BY addr_state;
+
+--Risk Analysis
+CREATE OR REPLACE TABLE `cedar-turbine-501913-v0.lend_club.accepted_credit_risk`
+AS
+SELECT
+  grade,
+  verification_status,
+  TRUNC(AVG(annual_inc),2) AS avg_inc,
+  COUNT(default_flag) AS num_defaults,
+  TRUNC(AVG(default_flag),3)*100 AS default_rate
+FROM `cedar-turbine-501913-v0.lend_club.accepted_clean_final`
+GROUP BY verification_status, grade
+ORDER BY grade, verification_status DESC;
+--This table showed the opposite of what I was expecting.
+--In every grade, verified income is tied to a higher default rate than unverified.
+--I suspect it may be related to the reason income was verified, such as previous defaults.
+--Need additional data to confirm.
